@@ -12,7 +12,7 @@ import re
 #SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 SCOPES = ['https://mail.google.com/']
 CATEGORIES = ['CATEGORY_FORUMS']
-BATCH_LIMIT=10
+BATCH_LIMIT=1000
 DATE_FORMAT_PATTERN = r'^\d{4}/(0[1-9]|1[0-2])/(0[1-9]|[1-2][0-9]|3[0-1])$'
 INVALID_INPUT_TEXT = 'Invalid input! Understand your error and re-run the script!'
 MENU_TEXT = """
@@ -136,7 +136,10 @@ def main():
     except Exception as error:
         print(f'An error occurred: {error}')
 
-main()
+
+
+if __name__ == '__main__': 
+     main()
 
 
 
