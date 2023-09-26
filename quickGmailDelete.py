@@ -11,8 +11,8 @@ import re
 # If modifying these scopes, delete the file token.json.
 #SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 SCOPES = ['https://mail.google.com/']
-CATEGORIES = ['CATEGORY_SOCIAL']
-BATCH_LIMIT=200
+CATEGORIES = ['CATEGORY_SOCIAL','TRASH','CATEGORY_FORUMS','CATEGORY_UPDATES','CATEGORY_PROMOTIONS']
+BATCH_LIMIT=10
 DATE_FORMAT_PATTERN = r'^\d{4}/(0[1-9]|1[0-2])/(0[1-9]|[1-2][0-9]|3[0-1])$'
 INVALID_INPUT_TEXT = '   Invalid input! Understand your error and re-run the script!'
 MENU_TEXT = """
