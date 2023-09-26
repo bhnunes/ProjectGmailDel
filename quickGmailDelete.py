@@ -11,10 +11,10 @@ import re
 # If modifying these scopes, delete the file token.json.
 #SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 SCOPES = ['https://mail.google.com/']
-CATEGORIES = ['CATEGORY_FORUMS']
-BATCH_LIMIT=1000
+CATEGORIES = ['CATEGORY_SOCIAL']
+BATCH_LIMIT=200
 DATE_FORMAT_PATTERN = r'^\d{4}/(0[1-9]|1[0-2])/(0[1-9]|[1-2][0-9]|3[0-1])$'
-INVALID_INPUT_TEXT = 'Invalid input! Understand your error and re-run the script!'
+INVALID_INPUT_TEXT = '   Invalid input! Understand your error and re-run the script!'
 MENU_TEXT = """
 1. Run Standard Clean Only
 2. Run Standard Clean and Inbox Clean by Date
@@ -24,20 +24,22 @@ MENU_TEXT = """
 WARNING: All messages will be deleted permanently (not moved to Trash).
 """
 
+folder_path = os.path.dirname(os.path.abspath(__file__))
 
+CREDENTIAL_PATH=folder_path+'\\'+"credentials.json"
+TOKEN_PATH=folder_path+'\\'+"token.json"
 
 def credentialMechanics():
     creds = None
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+    if os.path.exists(TOKEN_PATH):
+        creds = Credentials.from_authorized_user_file(TOKEN_PATH, SCOPES)
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', SCOPES)
+            flow = InstalledAppFlow.from_client_secrets_file(CREDENTIAL_PATH, SCOPES)
             creds = flow.run_local_server(port=0)
-        with open('token.json', 'w') as token:
+        with open(TOKEN_PATH, 'w') as token:
             token.write(creds.to_json())
     return creds
 
@@ -71,7 +73,7 @@ def getMessages(creds,choice,query):
                     stop=True
         
         if len(MessagesToDelete)==0:
-            raise Exception("There is nothing to be deleted at this time!")
+            raise Exception("   There is nothing to be deleted at this time!")
         else:
             return MessagesToDelete, service
 
@@ -89,21 +91,21 @@ def DeleteMessages(service,chunks):
         for id in chunk:
             msg_ids.append(id['id'])
         service.users().messages().batchDelete(userId='me', body={"ids": msg_ids}).execute()
-        print('Deleted Batch '+str(i)+' of '+str(len(chunks)))
+        print('   Deleted Batch '+str(i)+' of '+str(len(chunks)))
         i=i+1
 
 def StartandValidate():
     query=None
     print(MENU_TEXT)
     try:
-        choice=int(input('Choose an option:'))
+        choice=int(input('   Choose an option:'))
         if choice==4:
-            print('Process Exited')
+            print('   Process Exited')
             exit()
         elif (choice==2 or choice==3):
-            after_date = str(input("Please provide the After Date, in the format yyyy/mm/dd :"))
+            after_date = str(input("   Please provide the After Date, in the format yyyy/mm/dd :"))
             validateDate(after_date)
-            before_date = str(input("Please provide the Before Date, in the format yyyy/mm/dd :"))
+            before_date = str(input("   Please provide the Before Date, in the format yyyy/mm/dd :"))
             validateDate(before_date)
             query="in:inbox  after:"+str(after_date)+" before:"+str(before_date)
         elif choice==1:
@@ -122,7 +124,7 @@ def validateDate(date_string):
     if re.match(DATE_FORMAT_PATTERN, date_string):
         pass
     else:
-        raise Exception("The Format date provided is not in the expected pattern yyyy/mm/dd")
+        raise Exception("   The Format date provided is not in the expected pattern yyyy/mm/dd")
 
 
 def main():
@@ -132,9 +134,10 @@ def main():
         MessagesToDelete, service = getMessages(creds,choice,query)
         chunks=parseMessagesToDelete(MessagesToDelete)
         DeleteMessages(service,chunks)
-        print("Process Finished Succesfully at "+str(datetime.now()))
+        print("   Process Finished Succesfully at "+str(datetime.datetime.now()))
     except Exception as error:
-        print(f'An error occurred: {error}')
+        print(f'   An error occurred: {error}')
+
 
 
 
