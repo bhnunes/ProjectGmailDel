@@ -4,8 +4,8 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
 import datetime
+import re
 
 
 # If modifying these scopes, delete the file token.json.
@@ -13,13 +13,8 @@ import datetime
 SCOPES = ['https://mail.google.com/']
 CATEGORIES = ['CATEGORY_FORUMS']
 BATCH_LIMIT=10
-AFTER_DATE='2015/9/26'
-BEFORE_DATE='2020/9/27'
-QUERY="in:inbox  after:"+str(AFTER_DATE)+" before:"+str(BEFORE_DATE)
-SEARCH_BY_DATE=True
-
-
-INVALID_INPUT_TEXT = 'Invalid input! Try again'
+DATE_FORMAT_PATTERN = r'^\d{4}/(0[1-9]|1[0-2])/(0[1-9]|[1-2][0-9]|3[0-1])$'
+INVALID_INPUT_TEXT = 'Invalid input! Understand your error and re-run the script!'
 MENU_TEXT = """
 1. Run Standard Clean Only
 2. Run Standard Clean and Inbox Clean by Date
@@ -47,25 +42,26 @@ def credentialMechanics():
     return creds
 
 
-def getMessages(creds):
-        nextPageToken=None
+def getMessages(creds,choice,query):
         MessagesToDelete=[]
+        nextPageToken=None
         stop=False
         service = build('gmail', 'v1', credentials=creds)
-        while stop==False:
-            results = service.users().messages().list(userId='me',labelIds=CATEGORIES, pageToken=nextPageToken).execute()
-            if 'messages' in results:
-                MessagesToDelete.extend(results['messages'])
-            if 'nextPageToken' in results:
-                nextPageToken=results['nextPageToken']
-            else:
-                stop=True
+        if (choice==1 or choice==2):
+            while stop==False:
+                results = service.users().messages().list(userId='me',labelIds=CATEGORIES, pageToken=nextPageToken).execute()
+                if 'messages' in results:
+                    MessagesToDelete.extend(results['messages'])
+                if 'nextPageToken' in results:
+                    nextPageToken=results['nextPageToken']
+                else:
+                    stop=True
         
-        if SEARCH_BY_DATE==True:
+        if query!=None:
             nextPageToken=None
             stop=False
             while stop==False:
-                results = service.users().messages().list(userId='me',pageToken=nextPageToken,q=QUERY).execute()
+                results = service.users().messages().list(userId='me',pageToken=nextPageToken,q=query).execute()
                 if 'messages' in results:
                     MessagesToDelete.extend(results['messages'])
 
@@ -93,19 +89,54 @@ def DeleteMessages(service,chunks):
         for id in chunk:
             msg_ids.append(id['id'])
         service.users().messages().batchDelete(userId='me', body={"ids": msg_ids}).execute()
-        print('Deleted Batch'+str(i)+' of '+str(len(chunks)))
+        print('Deleted Batch '+str(i)+' of '+str(len(chunks)))
         i=i+1
+
+def StartandValidate():
+    query=None
+    print(MENU_TEXT)
+    try:
+        choice=int(input('Choose an option:'))
+        if choice==4:
+            print('Process Exited')
+            exit()
+        elif (choice==2 or choice==3):
+            after_date = str(input("Please provide the After Date, in the format yyyy/mm/dd :"))
+            validateDate(after_date)
+            before_date = str(input("Please provide the Before Date, in the format yyyy/mm/dd :"))
+            validateDate(before_date)
+            query="in:inbox  after:"+str(after_date)+" before:"+str(before_date)
+        elif choice==1:
+            pass
+        else:
+            print(INVALID_INPUT_TEXT)
+            exit()            
+    except Exception as error:
+        print(error)
+        exit()
+    return choice, query
+
+
+
+def validateDate(date_string):
+    if re.match(DATE_FORMAT_PATTERN, date_string):
+        pass
+    else:
+        raise Exception("The Format date provided is not in the expected pattern yyyy/mm/dd")
 
 
 def main():
+    choice,query = StartandValidate()
     try:
         creds=credentialMechanics()
-        MessagesToDelete, service = getMessages(creds)
+        MessagesToDelete, service = getMessages(creds,choice,query)
         chunks=parseMessagesToDelete(MessagesToDelete)
         DeleteMessages(service,chunks)
         print("Process Finished Succesfully at "+str(datetime.now()))
     except Exception as error:
         print(f'An error occurred: {error}')
+
+main()
 
 
 
