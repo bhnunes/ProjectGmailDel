@@ -82,11 +82,11 @@ def credentialMechanics():
 
 def getMessages(creds,choice,query):
         MessagesToDelete=[]
-        nextPageToken=None
-        stop=False
         service = build('gmail', 'v1', credentials=creds)
         if (choice==1 or choice==2):
             for category in CATEGORIES:
+                nextPageToken=None
+                stop=False
                 while stop==False:
                     results = service.users().messages().list(userId='me',labelIds=category, pageToken=nextPageToken).execute()
                     if 'messages' in results:
